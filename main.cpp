@@ -11,9 +11,9 @@ void load(const wchar_t* file)
     map[file] = new Gdiplus::Image(file);
 }
 
-void draw(HDC dc, const wchar_t* file)
+void draw(HDC dc, const wchar_t* file, int x, int y)
 {
-    Gdiplus::Rect rect(20, 20, 500, 500);
+    Gdiplus::Rect rect(x, y, 50, 50);
     Gdiplus::Graphics grpx(dc);
     grpx.DrawImage(map[file], rect);
 }
@@ -61,6 +61,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     ULONG_PTR gdiplusToken;
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+    load(L"black_king.png");
+    load(L"black_queen.png");
+    load(L"black_slon.png");
+    load(L"black_horse.png");
+    load(L"black_tura.png");
+    load(L"black_peshka.png");
+
     // Run the message loop
     MSG msg = {};
     while (GetMessage(&msg, NULL, 0, 0)) {
@@ -83,8 +90,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hwnd, &ps);
         FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
-        load(L"test2.png");
-        draw(hdc, L"test2.png");
+        draw(hdc, L"black_peshka.png",100,100);
         EndPaint(hwnd, &ps);
         return 0;
     }
