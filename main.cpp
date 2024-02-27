@@ -1,8 +1,12 @@
 #include <windows.h>
 #include <gdiplus.h>
 #include <map>
+#include <iostream>
 
 #pragma comment (lib,"Gdiplus.lib")
+
+const wchar_t* grab;
+HWND hWnd;
 
 std::map<const wchar_t*, Gdiplus::Image*> map;
 
@@ -28,8 +32,43 @@ void drawField(HDC dc) {
         }
 }
 
+void click() {
+    POINT cursorPos;
+    GetCursorPos(&cursorPos);
+    RECT windowRect;
+    GetWindowRect(hWnd, &windowRect);
+    int x = cursorPos.x - windowRect.left;
+    int y = cursorPos.y - windowRect.top;
+    grab = field[y / CELL_SIZE][x / CELL_SIZE];
+}
+
+void drawGrabbed(HDC dc) {
+    std::cout << grab << std::endl;
+    POINT cursorPos;
+    GetCursorPos(&cursorPos);
+    RECT windowRect;
+    GetWindowRect(hWnd, &windowRect);
+    int x = cursorPos.x - windowRect.left;
+    int y = cursorPos.y - windowRect.top;
+    draw(dc, grab, x, y);
+}
+
 // Window Procedure function declaration
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+// Define a timer ID
+#define TIMER_ID 1
+
+// Define the timer interval in milliseconds
+#define TIMER_INTERVAL_MS 1000 / 1
+
+// Timer callback function
+VOID CALLBACK TimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
+    // This function will be called every TIMER_INTERVAL_MS milliseconds
+    // Perform your desired actions here
+
+    InvalidateRect(hwnd, 0, 0);
+}
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     // Register the window class
@@ -44,7 +83,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     RegisterClass(&wc);
 
     // Create the window
-    HWND hwnd = CreateWindowEx(
+    hWnd = CreateWindowEx(
         0,                              // Optional window styles
         CLASS_NAME,                     // Window class
         "Minimal WinAPI Window",        // Window text
@@ -59,12 +98,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         NULL        // Additional application data
     );
 
-    if (hwnd == NULL) {
+    if (hWnd == NULL) {
         return 0;
     }
 
     // Display the window
-    ShowWindow(hwnd, nCmdShow);
+    ShowWindow(hWnd, nCmdShow);
 
     // start up GDI+ -- only need to do this once per process at startup
     Gdiplus::GdiplusStartupInput gdiplusStartupInput;
@@ -108,6 +147,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     field[7][3] = L"white_queen.png";
     field[7][4] = L"white_king.png";
 
+    UINT_PTR timerId = SetTimer(hWnd, TIMER_ID, TIMER_INTERVAL_MS, TimerProc);
+
     // Run the message loop
     MSG msg = {};
     while (GetMessage(&msg, NULL, 0, 0)) {
@@ -118,6 +159,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // shut down - only once per process
     Gdiplus::GdiplusShutdown(gdiplusToken);
     return 0;
+}
+
+int main() {
+    WinMain(0, 0, 0, 1);
 }
 
 // Window Procedure function definition
@@ -131,7 +176,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         HDC hdc = BeginPaint(hwnd, &ps);
         FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 2));
         drawField(hdc);
+        drawGrabbed(hdc);
         EndPaint(hwnd, &ps);
+        return 0;
+    }
+    case WM_LBUTTONDOWN: {
+        click();
         return 0;
     }
     }
