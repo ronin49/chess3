@@ -22,8 +22,10 @@ void draw(HDC dc, const wchar_t* file, int x, int y)
 const wchar_t* field[8][8] = {};
 void drawField(HDC dc) {
     for (int row = 0; row < 8; ++row)
-        for (int col = 0; col < 8; ++col)
+        for (int col = 0; col < 8; ++col) {
+            draw(dc, L"cell.png", col * CELL_SIZE, row * CELL_SIZE);
             draw(dc, field[row][col], col * CELL_SIZE, row * CELL_SIZE);
+        }
 }
 
 // Window Procedure function declaration
@@ -81,6 +83,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     load(L"white_horse.png");
     load(L"white_tura.png");
     load(L"white_peshka.png");
+    load(L"cell.png");
 
     for (int col = 0; col != 8; ++col) {
         field[1][col] = L"black_peshka.png";
